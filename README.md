@@ -96,15 +96,7 @@ PROFILE ──"Lihat Produk"──► PRODUK ◄──"Kembali Belanja"── KE
 
 ```
 lib/
-├── main.dart                  # Entry point, tema, setup Provider
-├── providers/
-│   └── cart_provider.dart     # State keranjang (ChangeNotifier)
-├── models/
-│   └── product.dart           # Model data produk
-└── screens/
-    ├── profile_page.dart
-    ├── product_page.dart
-    └── cart_page.dart
+├── main.dart                
 ```
 
 ---
