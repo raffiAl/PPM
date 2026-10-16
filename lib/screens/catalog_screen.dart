@@ -1,16 +1,16 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../main.dart'; // design system: NeoColors, NeoCard, NeoButton, NeoIconButton, CartIconButton
 import '../models/book.dart';
 import '../providers/cart_provider.dart';
 import '../providers/theme_provider.dart';
-import 'cart_screen.dart';
 
 // ============================================================
-// HELPER — format rupiah manual: 95000 → "Rp 95.000"
-// Pemisah ribuan pakai titik, tanpa package tambahan.
-// Sengaja PUBLIC (tanpa underscore) supaya nanti halaman Keranjang
-// bisa import fungsi ini dari file ini.
+// HELPER — format rupiah (TETAP, gak berubah)
 // ============================================================
 String formatRupiah(int angka) {
   final String s = angka.toString();
@@ -28,9 +28,7 @@ String formatRupiah(int angka) {
 }
 
 // ============================================================
-// DATA BUKU — 6 buku (syarat minimal 4, ambil 6 biar aman).
-// price: int rupiah. imageUrl: picsum beda id per buku,
-// ukuran 300x450 biar rasionya portrait kayak cover buku.
+// DATA BUKU — TETAP persis sebelumnya
 // ============================================================
 const List<Book> _daftarBuku = [
   Book(
@@ -77,45 +75,71 @@ const List<Book> _daftarBuku = [
   ),
 ];
 
+// Genre paralel per index — buat sticker.
+// Model Book GAK BOLEH diubah, jadi data genre numpang di file ini.
+const List<String> _genre = [
+  'Fiksi', // Laskar Pelangi
+  'Fantasi', // Bumi
+  'Non-Fiksi', // Filosofi Teras
+  'Inspirasi', // Negeri 5 Menara
+  'Romance', // Perahu Kertas
+  'Fiksi Sains', // Hujan
+];
+
 // ============================================================
-// HALAMAN KATALOG — StatelessWidget.
-// Semua state (keranjang, tema) urusan provider.
+// HALAMAN KATALOG — versi NEOBRUTALISM
 // ============================================================
 class CatalogScreen extends StatelessWidget {
   const CatalogScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // WATCH (tampilan): buat IKON tombol tema — begitu toggleTheme()
-    // dipanggil, build ini jalan lagi → ikon ganti dark ↔ light
+    final palette = NeoColors.of(context);
+
+    // WATCH (tampilan) — buat ikon toggle tema
     final isDarkMode = context.watch<ThemeProvider>().isDarkMode;
 
     return Scaffold(
+      backgroundColor: palette.bg,
       appBar: AppBar(
-        title: const Text('NusaBookstore'),
+        backgroundColor: palette.bg,
+        elevation: 0,
+        // Matiin shadow & tint M3 pas di-scroll — border tebal kita
+        // yang jadi pemisah
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        // Border bawah tebal via shape (gak nambah tinggi AppBar)
+        shape: Border(bottom: BorderSide(color: palette.ink, width: 3)),
+        title: Text(
+          'NUSABOOKSTORE',
+          style: GoogleFonts.archivoBlack(fontSize: 22, color: palette.ink),
+        ),
         actions: [
-          // (a) Toggle Light/Dark mode.
-          // Ikon: dark_mode pas lagi TERANG, light_mode pas lagi GELAP
-          IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+          // Toggle Light/Dark — persegi kuning border ink.
+          // Ikon: dark_mode pas lagi terang, light_mode pas gelap.
+          // AKSI tetap pakai READ — aturan gak berubah!
+          NeoIconButton(
+            color: NeoColors.kuning,
+            icon: isDarkMode ? Icons.light_mode : Icons.dark_mode,
             tooltip: isDarkMode ? 'Mode Terang' : 'Mode Gelap',
             onPressed: () {
-              // AKSI pakai READ — gak butuh rebuild, cukup panggil method
               context.read<ThemeProvider>().toggleTheme();
             },
           ),
-
-          // (b) Ikon keranjang ber-badge — dibikin widget terpisah
-          // supaya yang nge-watch cuma ikon ini (list buku gak
-          // ikut rebuild tiap keranjang berubah)
+          const SizedBox(width: 8),
           const CartIconButton(),
         ],
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         itemCount: _daftarBuku.length,
         itemBuilder: (context, index) {
-          return _BookCard(book: _daftarBuku[index]);
+          return _BookCard(
+            book: _daftarBuku[index],
+            genre: _genre[index],
+            // Aksen BERGANTIAN per index
+            aksen: NeoColors.accents[index % NeoColors.accents.length],
+          );
         },
       ),
     );
@@ -123,107 +147,164 @@ class CatalogScreen extends StatelessWidget {
 }
 
 // ============================================================
-// KARTU PER BUKU — gambar cover + info + tombol tambah
+// KARTU PER BUKU — NeoCard + sticker + chip harga + NeoButton
 // ============================================================
 class _BookCard extends StatelessWidget {
   final Book book;
+  final String genre;
+  final Color aksen;
 
-  const _BookCard({required this.book});
+  const _BookCard({
+    required this.book,
+    required this.genre,
+    required this.aksen,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Semua warna dari colorScheme (JANGAN hardcode!) supaya
-    // Light/Dark mode dua-duanya bagus otomatis
-    final colorScheme = Theme.of(context).colorScheme;
+    final palette = NeoColors.of(context);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Gambar cover — ClipRRect + errorBuilder fallback.
-            // Fallback "abu"-nya pakai warna SCHEME (bukan Colors.grey
-            // hardcoded) biar tetap oke di dark mode
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                book.imageUrl,
-                width: 90,
-                height: 135, // rasio 2:3, portrait kayak cover buku
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 90,
-                  height: 135,
-                  color: colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.menu_book,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Kolom info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      // Jarak antar card — kasih ruang buat hard shadow (6px)
+      padding: const EdgeInsets.only(bottom: 20),
+      child: NeoCard(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ===== Gambar + genre sticker =====
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  // Judul — bold
-                  Text(
-                    book.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  // Gambar — border ink 2 + ClipRRect + errorBuilder (tetap)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: palette.ink, width: 2),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-
-                  // Penulis — "abu" versi scheme (adaptif dark mode)
-                  Text(
-                    book.author,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Harga
-                  Text(
-                    formatRupiah(book.price), // 95000 → "Rp 95.000"
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Tombol Tambah ke Keranjang
-                  FilledButton.icon(
-                    onPressed: () {
-                      // AKSI pakai READ — ini SYARAT PENILAIAN.
-                      // addItem udah anti-duplikat: buku yang sama
-                      // masuk lagi → quantity-nya yang nambah
-                      context.read<CartProvider>().addItem(book);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Berhasil ditambahkan ke keranjang'),
-                          duration: Duration(seconds: 2),
+                    child: ClipRRect(
+                      // 12 - 2 biar gambar gak nimpa border di sudut
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        book.imageUrl,
+                        width: 92,
+                        height: 138,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 92,
+                          height: 138,
+                          color: NeoColors.lavender,
+                          child: const Icon(
+                            Icons.menu_book,
+                            color: NeoColors.onAccent,
+                          ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.add_shopping_cart, size: 18),
-                    label: const Text('Tambah ke Keranjang'),
+                      ),
+                    ),
+                  ),
+
+                  // Genre sticker — aksen bergantian, dirotasi -2°,
+                  // nempel di pojok kiri atas gambar (nongol keluar dikit)
+                  Positioned(
+                    top: -10,
+                    left: -10,
+                    child: Transform.rotate(
+                      angle: -2 * math.pi / 180, // -2 derajat → radian
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: aksen,
+                          border: Border.all(color: palette.ink, width: 2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          genre.toUpperCase(),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: NeoColors.onAccent,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(width: 14),
+
+              // ===== Kolom info =====
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Judul — Archivo Black, UPPERCASE
+                    Text(
+                      book.title.toUpperCase(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.archivoBlack(
+                        fontSize: 18,
+                        height: 1.15,
+                        color: palette.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Author — Space Grotesk, abu adaptif
+                    Text(
+                      book.author,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        color: palette.inkSoft,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Harga — chip aksen, Archivo Black UPPERCASE
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: aksen,
+                        border: Border.all(color: palette.ink, width: 2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        formatRupiah(book.price).toUpperCase(),
+                        style: GoogleFonts.archivoBlack(
+                          fontSize: 13,
+                          color: NeoColors.onAccent,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Tombol — LOGIC TIDAK BERUBAH:
+                    // read + addItem + SnackBar
+                    NeoButton(
+                      label: 'Tambah ke Keranjang',
+                      color: NeoColors.kuning,
+                      icon: Icons.add_shopping_cart,
+                      onPressed: () {
+                        context.read<CartProvider>().addItem(book);
+
+                        showNeoSnackBar(
+                          context,
+                          'Berhasil ditambahkan ke keranjang',
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

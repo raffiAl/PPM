@@ -1,109 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../main.dart'; // design system: NeoColors, NeoCard, NeoButton, NeoIconButton, CartIconButton, showNeoSnackBar
 import '../providers/cart_provider.dart';
-import 'catalog_screen.dart'; // formatRupiah didefinisikan di sana
+import 'catalog_screen.dart'; // formatRupiah
 
 // ============================================================
-// WIDGET REUSABLE — CartIconButton
-// Ikon keranjang + badge jumlah item (Stack + Positioned).
-// Dulunya class _CartIconWithBadge di catalog_screen.dart — sekarang
-// jadi PUBLIC dan dipakai di AppBar Katalog DAN Keranjang.
-// Cuma ada SATU versi kode badge di seluruh app (anti copy-paste).
-//
-// WATCH di sini (tampilan): badge auto-update tiap keranjang berubah
-// ============================================================
-class CartIconButton extends StatelessWidget {
-  const CartIconButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // WATCH (tampilan): totalItems harus selalu fresh
-    final totalItems = context.watch<CartProvider>().totalItems;
-
-    return Stack(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.shopping_cart),
-          tooltip: 'Keranjang',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CartScreen()),
-            );
-          },
-        ),
-
-        // Badge angka — cuma muncul kalau totalItems > 0
-        if (totalItems > 0)
-          Positioned(
-            top: 4,
-            right: 4,
-            // IgnorePointer biar badge gak "makan" sentuhan ikon
-            child: IgnorePointer(
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  // borderRadius (bukan shape.circle) biar pas angkanya
-                  // 2 digit bentuknya jadi kapsul, bukan ke-overflow
-                  color: colorScheme.error,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                child: Center(
-                  child: Text(
-                    '$totalItems',
-                    style: TextStyle(
-                      color: colorScheme.onError,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// ============================================================
-// HALAMAN KERANJANG
+// HALAMAN KERANJANG — versi NEOBRUTALISM
+// Logic gak berubah sama sekali: watch buat tampilan,
+// read buat aksi (decrement/increment/remove/clear).
 // ============================================================
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // WATCH: list & kondisi kosong ke-update real-time tiap qty
-    // berubah / item dihapus / checkout
+    final palette = NeoColors.of(context);
+
+    // WATCH — list & kondisi kosong real-time
     final cart = context.watch<CartProvider>();
     final kosong = cart.items.isEmpty;
 
     return Scaffold(
+      backgroundColor: palette.bg,
       appBar: AppBar(
-        title: const Text('Keranjang'),
-        // back arrow otomatis — halaman ini didorong lewat Navigator.push
-        actions: const [
-          CartIconButton(), // widget reusable — badge real-time
-        ],
+        backgroundColor: palette.bg,
+        foregroundColor: palette.ink, // back arrow ikut warna ink
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        // Border bawah tebal — sama persis katalog
+        shape: Border(bottom: BorderSide(color: palette.ink, width: 3)),
+        title: Text(
+          'KERANJANG',
+          style: GoogleFonts.archivoBlack(fontSize: 22, color: palette.ink),
+        ),
+        actions: const [CartIconButton()], // badge real-time
       ),
 
       // ===== 2 KONDISI =====
       body: kosong
           ? const _EmptyCart()
           : ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               itemCount: cart.items.length,
               itemBuilder: (context, index) {
                 return _CartItemCard(item: cart.items[index]);
               },
             ),
 
-      // Bagian bawah FIXED — di luar ListView biar gak ikut scroll
+      // Bawah FIXED — di luar ListView biar gak ikut scroll
       bottomNavigationBar: kosong
           ? null
           : const SafeArea(child: _CartBottomBar()),
@@ -117,7 +64,7 @@ class _EmptyCart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final palette = NeoColors.of(context);
 
     return Center(
       child: Padding(
@@ -125,28 +72,46 @@ class _EmptyCart extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ikon keranjang besar "abu" — pakai warna scheme biar
-            // tetap oke di dark mode (bukan Colors.grey hardcoded)
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 100,
-              color: colorScheme.onSurfaceVariant,
+            // Ikon keranjang besar dalam lingkaran border ink + hard shadow
+            Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                color: palette.surface,
+                shape: BoxShape.circle,
+                border: Border.all(color: palette.ink, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: palette.ink,
+                    offset: const Offset(6, 6),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.shopping_cart_outlined,
+                size: 64,
+                color: palette.ink,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 28),
             Text(
               'Keranjang masih kosong',
-              style: TextStyle(
-                fontSize: 16,
-                color: colorScheme.onSurfaceVariant,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: palette.ink,
               ),
             ),
             const SizedBox(height: 24),
 
-            // Cukup pop — halaman ini memang didorong DI ATAS Katalog
-            FilledButton.icon(
+            // Cukup pop — halaman ini didorong DI ATAS Katalog
+            NeoButton(
+              label: 'Kembali Belanja',
+              color: NeoColors.mint,
+              icon: Icons.menu_book,
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.menu_book),
-              label: const Text('Kembali Belanja'),
             ),
           ],
         ),
@@ -163,222 +128,240 @@ class _CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final palette = NeoColors.of(context);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Gambar kecil (cover buku) — ClipRRect + errorBuilder
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                item.book.imageUrl,
-                width: 70,
-                height: 105,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 70,
-                  height: 105,
-                  color: colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.menu_book,
-                    color: colorScheme.onSurfaceVariant,
+    // Aksen STABIL per buku — buku yang sama dapat warna sama
+    // kayak di Katalog (di sana index = id - 1)
+    final aksen =
+        NeoColors.accents[(item.book.id - 1) % NeoColors.accents.length];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16), // 16 antar card
+      child: NeoCard(
+        child: Padding(
+          padding: const EdgeInsets.all(12), // 12 dalam card
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Gambar kecil — border ink 2 + errorBuilder (tetap)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: palette.ink, width: 2),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    item.book.imageUrl,
+                    width: 64,
+                    height: 92,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 64,
+                      height: 92,
+                      color: NeoColors.lavender,
+                      child: const Icon(
+                        Icons.menu_book,
+                        color: NeoColors.onAccent,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-            // Kolom info + aksi
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Judul + tombol hapus
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.book.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+              // Kolom info + aksi
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Judul + tombol hapus
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.book.title.toUpperCase(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.archivoBlack(
+                              fontSize: 15,
+                              height: 1.15,
+                              color: palette.ink,
+                            ),
                           ),
                         ),
-                      ),
-                      // Hapus item — AKSI pakai READ
-                      IconButton(
-                        onPressed: () {
-                          context.read<CartProvider>().removeItem(item.book.id);
-                        },
-                        icon: const Icon(Icons.delete_outline),
-                        color: colorScheme.error,
-                        tooltip: 'Hapus',
-                      ),
-                    ],
-                  ),
-
-                  // Penulis
-                  Text(
-                    item.book.author,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
+                        // Hapus — persegi coral (token oranye) border ink
+                        NeoIconButton(
+                          color: NeoColors.oranye,
+                          icon: Icons.delete_outline,
+                          tooltip: 'Hapus',
+                          onPressed: () {
+                            // AKSI pakai READ
+                            context.read<CartProvider>().removeItem(
+                              item.book.id,
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
-                  // Harga satuan
-                  Text(
-                    formatRupiah(item.book.price),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.primary,
+                    // Harga satuan
+                    Text(
+                      formatRupiah(item.book.price),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: palette.inkSoft,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
+                    const SizedBox(height: 12),
 
-                  // Baris quantity (− qty +) + subtotal
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Tombol − dan + — AKSI pakai READ.
-                      // decrementQty otomatis HAPUS item pas qty sampai 0
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              context.read<CartProvider>().decrementQty(
-                                item.book.id,
-                              );
-                            },
-                            icon: const Icon(Icons.remove_circle_outline),
-                            tooltip: 'Kurangi',
+                    // Quantity: − (pink) / angka besar / + (mint)
+                    // + subtotal chip aksen
+                    Row(
+                      children: [
+                        NeoIconButton(
+                          color: NeoColors.pink,
+                          icon: Icons.remove,
+                          tooltip: 'Kurangi',
+                          onPressed: () {
+                            // − sampai 0 → item TERHAPUS otomatis
+                            // (logic-nya di provider, gak berubah)
+                            context.read<CartProvider>().decrementQty(
+                              item.book.id,
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 36,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '${item.quantity}',
+                              style: GoogleFonts.archivoBlack(
+                                fontSize: 20,
+                                color: palette.ink,
+                              ),
+                            ),
                           ),
-                          SizedBox(
-                            width: 32,
-                            child: Center(
-                              child: Text(
-                                '${item.quantity}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                        ),
+                        const SizedBox(width: 8),
+                        NeoIconButton(
+                          color: NeoColors.mint,
+                          icon: Icons.add,
+                          tooltip: 'Tambah',
+                          onPressed: () {
+                            context.read<CartProvider>().incrementQty(
+                              item.book.id,
+                            );
+                          },
+                        ),
+
+                        // Subtotal chip — nempel kanan.
+                        // Flexible + FittedBox: pas subtotalnya panjang
+                        // (misal RP 9.500.000) chip auto-nyusut,
+                        // GAK PERNAH overflow
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: aksen,
+                                  border: Border.all(
+                                    color: palette.ink,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  formatRupiah(item.book.price * item.quantity)
+                                      .toUpperCase(),
+                                  style: GoogleFonts.archivoBlack(
+                                    fontSize: 13,
+                                    color: NeoColors.onAccent,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                          IconButton(
-                            onPressed: () {
-                              context.read<CartProvider>().incrementQty(
-                                item.book.id,
-                              );
-                            },
-                            icon: const Icon(Icons.add_circle_outline),
-                            tooltip: 'Tambah',
-                          ),
-                        ],
-                      ),
-
-                      // Subtotal = harga satuan × qty
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Subtotal',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          Text(
-                            formatRupiah(item.book.price * item.quantity),
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ---------- Bagian bawah: total harga + checkout ----------
+// ---------- Bagian bawah: TOTAL + Checkout ----------
 class _CartBottomBar extends StatelessWidget {
   const _CartBottomBar();
 
-  // Checkout: (a) SnackBar dulu, (b) baru clearCart.
-  // Setelah clearCart, halaman otomatis balik ke empty state karena
-  // CartScreen nge-watch provider
+  // Urutan & logic TIDAK BERUBAH: (a) SnackBar dulu, (b) clearCart.
+  // Setelah clearCart → semua yang watch (halaman ini + badge di
+  // semua halaman) rebuild → otomatis balik ke empty state.
   void _checkout(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Checkout berhasil! Terima kasih sudah berbelanja'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    showNeoSnackBar(context, 'Checkout berhasil!');
     context.read<CartProvider>().clearCart();
   }
 
   @override
   Widget build(BuildContext context) {
-    // WATCH: total harga auto-update tiap qty berubah
+    // WATCH — total auto-update tiap qty berubah
     final cart = context.watch<CartProvider>();
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        border: Border(
-          top: BorderSide(color: colorScheme.outlineVariant, width: 1),
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Total harga — auto-update
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Total:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          // TOTAL — NeoCard kuning
+          NeoCard(
+            color: NeoColors.kuning,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'TOTAL',
+                    style: GoogleFonts.archivoBlack(
+                      fontSize: 18,
+                      color: NeoColors.onAccent,
+                    ),
+                  ),
+                  Text(
+                    formatRupiah(cart.totalPrice).toUpperCase(),
+                    style: GoogleFonts.archivoBlack(
+                      fontSize: 22,
+                      color: NeoColors.onAccent,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                formatRupiah(cart.totalPrice),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 12),
 
-          // Checkout full-width
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _checkout(context),
-              icon: const Icon(Icons.payment),
-              label: const Text('Checkout / Bayar'),
-            ),
+          // Checkout — NeoButton pink full-width
+          NeoButton(
+            label: 'Checkout / Bayar',
+            color: NeoColors.pink,
+            icon: Icons.payment,
+            onPressed: () => _checkout(context),
           ),
         ],
       ),
