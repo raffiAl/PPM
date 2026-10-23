@@ -136,6 +136,16 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Nusa Travel'),
         actions: [
+          // DEMO 404 — arahin ke route gak dikenal, harus jatuh ke
+          // onUnknownRoute → NotFoundScreen. BOLEH DIHAPUS sebelum
+          // dikumpul.
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            tooltip: 'Tes 404',
+            onPressed: () {
+              Navigator.pushNamed(context, '/ngawur');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
