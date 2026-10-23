@@ -162,19 +162,18 @@ Aplikasi ini **tanpa package tambahan** — murni Flutter SDK.
 
 ## 📸 Screenshot
 
-> 📌 Semua screenshot disimpan di folder `screenshots/`.
+> 📌 Screenshot.
 
 | Halaman | Screenshot |
 |---|:---:|
 | **Splash Screen** — logo & tombol "Mulai Jelajah" | <img width="563" height="964" alt="image" src="https://github.com/user-attachments/assets/818b7ed1-29d4-4534-83a5-ad5c377814e1" /> |
-| **Home Screen** — katalog paket wisata | <img width="569" height="964" alt="image" src="https://github.com/user-attachments/assets/286e42bf-6bcd-40c4-9de3-fe4ddc0b561b" />
- |
-| **Detail Screen** — detail paket via arguments | ![](screenshots/03_detail.png) |
-| **Booking Screen** — form pemesanan | ![](screenshots/04_booking.png) |
-| **Dialog PopScope** — konfirmasi sebelum back dari Booking | ![](screenshots/05_popscope_dialog.png) |
-| **SnackBar** — tampil di Detail setelah booking berhasil | ![](screenshots/06_snackbar_booking.png) |
-| **Not Found Screen** — halaman 404 | ![](screenshots/07_notfound.png) |
-| **Dialog Logout** — konfirmasi sebelum kembali ke Splash *(bonus)* | ![](screenshots/08_logout_dialog.png) |
+| **Home Screen** — katalog paket wisata | <img width="569" height="964" alt="image" src="https://github.com/user-attachments/assets/286e42bf-6bcd-40c4-9de3-fe4ddc0b561b" /> |
+| **Detail Screen** — detail paket via arguments | <img width="562" height="975" alt="image" src="https://github.com/user-attachments/assets/732bfdb6-cf3e-4591-98b4-27fdc27c099b" /> |
+| **Booking Screen** — form pemesanan | <img width="556" height="973" alt="image" src="https://github.com/user-attachments/assets/66459d80-6ab0-4d65-860a-884b3ed43177" /> |
+| **Dialog PopScope** — konfirmasi sebelum back dari Booking | <img width="553" height="961" alt="image" src="https://github.com/user-attachments/assets/ac2a5ff6-fd64-429b-afc4-3a0b76e2daf6" /> |
+| **SnackBar** — tampil di Detail setelah booking berhasil | <img width="563" height="1062" alt="image" src="https://github.com/user-attachments/assets/89e1a695-1033-41f0-b5e0-82b73da2324a" /> |
+| **Not Found Screen** — halaman 404 | <img width="569" height="969" alt="image" src="https://github.com/user-attachments/assets/68014a49-8570-4225-beb4-d50784a697e7" /> |
+| **Dialog Logout** — konfirmasi sebelum kembali ke Splash *(bonus)* | <img width="564" height="965" alt="image" src="https://github.com/user-attachments/assets/73f50372-2806-483e-ae00-89b58f72fb42" /> |
 
 ---
 
