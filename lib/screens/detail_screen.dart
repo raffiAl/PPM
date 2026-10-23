@@ -99,13 +99,27 @@ class DetailScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        // push() TUNGGU sampai Booking di-pop (await),
+                        // lalu tangkap RESULT-nya
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => BookingScreen(package: package),
                           ),
                         );
+
+                        // Result ada (String sukses dari Booking) → SnackBar
+                        if (result != null && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(result),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.travel_explore),
                       label: const Text(
