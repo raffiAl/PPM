@@ -166,8 +166,9 @@ Aplikasi ini **tanpa package tambahan** — murni Flutter SDK.
 
 | Halaman | Screenshot |
 |---|:---:|
-| **Splash Screen** — logo & tombol "Mulai Jelajah" | ![](screenshots/01_splash.png) |
-| **Home Screen** — katalog paket wisata | ![](screenshots/02_home.png) |
+| **Splash Screen** — logo & tombol "Mulai Jelajah" | <img width="563" height="964" alt="image" src="https://github.com/user-attachments/assets/818b7ed1-29d4-4534-83a5-ad5c377814e1" /> |
+| **Home Screen** — katalog paket wisata | <img width="569" height="964" alt="image" src="https://github.com/user-attachments/assets/286e42bf-6bcd-40c4-9de3-fe4ddc0b561b" />
+ |
 | **Detail Screen** — detail paket via arguments | ![](screenshots/03_detail.png) |
 | **Booking Screen** — form pemesanan | ![](screenshots/04_booking.png) |
 | **Dialog PopScope** — konfirmasi sebelum back dari Booking | ![](screenshots/05_popscope_dialog.png) |
