@@ -1,5 +1,4 @@
-````markdown
-# 🧭 Nusa Travel — Aplikasi Pariwisata Flutter
+# Nusa Travel — Aplikasi Pariwisata Flutter
 
 **Tugas Pemrograman Perangkat Mobile (PPM) — Materi Navigation & Routing**
 
@@ -193,5 +192,5 @@ Aplikasi ini **tanpa package tambahan** — murni Flutter SDK.
    dialog konfirmasi.
 4. **`initialRoute` diset eksplisit** ke Splash — aplikasi selalu dimulai
    dari Splash meskipun terdapat sisa route sebelumnya.
-````
+
 
