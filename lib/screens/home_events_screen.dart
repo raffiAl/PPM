@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../data/sample_events.dart';
 import '../models/event_item.dart';
 import '../models/registration_ticket.dart';
+import '../widgets/event_card.dart';
+import '../widgets/filter_bottom_sheet.dart';
 import 'event_registration_screen.dart';
 import 'registered_tickets_screen.dart';
 
@@ -59,11 +62,11 @@ class _HomeEventsScreenState extends State<HomeEventsScreen> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          // Tab 1 — Daftar Seminar (placeholder, ter-wired ke registrasi).
+          // Tab 1 — Daftar Seminar (list + filter kategori).
           _SeminarListTab(onRegister: _openRegistration),
           // Tab 2 — Galeri & Denah (placeholder).
           const _GalleryTab(),
-          // Tab 3 — Tiket Saya (placeholder, ter-wired ke list tiket shell).
+          // Tab 3 — Tiket Saya (placeholder, ter-wiring ke list tiket shell).
           RegisteredTicketsScreen(
             tickets: _tickets,
             onRemoveTicket: _removeTicket,
@@ -92,20 +95,80 @@ class _HomeEventsScreenState extends State<HomeEventsScreen> {
   }
 }
 
-/// Tab 1 — Daftar Seminar (placeholder).
-// TODO tahap 2: diganti implementasi asli (ListView.builder + EventCard
-// + filter kategori via showModalBottomSheet).
-class _SeminarListTab extends StatelessWidget {
+/// Tab 1 — Daftar Seminar.
+///
+/// StatefulWidget sendiri agar filter kategori tersimpan selama tab hidup
+/// di dalam IndexedStack (tidak reset saat berpindah tab).
+class _SeminarListTab extends StatefulWidget {
   const _SeminarListTab({required this.onRegister});
 
   /// Callback ke shell: buka layar registrasi untuk event ini.
   final void Function(EventItem event) onRegister;
 
   @override
+  State<_SeminarListTab> createState() => _SeminarListTabState();
+}
+
+class _SeminarListTabState extends State<_SeminarListTab> {
+  /// Kategori aktif; 'Semua' berarti tanpa filter.
+  String _selectedCategory = 'Semua';
+
+  /// Buka bottom sheet filter, lalu terapkan hasilnya.
+  Future<void> _openFilter() async {
+    final result = await FilterBottomSheet.show(context, _selectedCategory);
+
+    if (result != null && result != _selectedCategory && mounted) {
+      setState(() => _selectedCategory = result);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final List<EventItem> filteredEvents = sampleEvents
+        .where(
+          (event) =>
+              _selectedCategory == 'Semua' ||
+              event.category == _selectedCategory,
+        )
+        .toList();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Daftar Seminar')),
-      body: const Center(child: Text('Daftar seminar akan tampil di sini.')),
+      appBar: AppBar(
+        title: const Text('Daftar Seminar'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Filter Kategori',
+            onPressed: _openFilter,
+          ),
+        ],
+      ),
+      body: filteredEvents.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 72, color: Colors.grey.shade400),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Tidak ada seminar di kategori ini',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+              itemCount: filteredEvents.length,
+              itemBuilder: (context, index) {
+                final event = filteredEvents[index];
+                return EventCard(
+                  event: event,
+                  onTap: () => widget.onRegister(event),
+                );
+              },
+            ),
     );
   }
 }
