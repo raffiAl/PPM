@@ -18,7 +18,8 @@ import 'registered_tickets_screen.dart';
 /// - Tambah tiket : shell push layar registrasi → layar mengembalikan
 ///                  RegistrationTicket via Navigator.pop(context, result)
 ///                  → shell setState add + SnackBar.
-/// - Hapus tiket  : tab tiket memanggil callback onRemoveTicket dari shell.
+/// - Hapus tiket  : tab tiket memanggil callback onRemoveTicket dari shell
+///                  setelah user konfirmasi lewat AlertDialog.
 class HomeEventsScreen extends StatefulWidget {
   const HomeEventsScreen({super.key});
 
@@ -70,10 +71,11 @@ class _HomeEventsScreenState extends State<HomeEventsScreen> {
     }
   }
 
-  /// Callback hapus tiket dari Tab 3 (shell tetap satu-satunya pemilik list).
-  // TODO tahap 5: dipanggil setelah user konfirmasi batal lewat AlertDialog.
-  void _removeTicket(RegistrationTicket ticket) {
-    setState(() => _tickets.remove(ticket));
+  /// Callback hapus tiket dari Tab 3 — dipanggil dari onDismissed
+  /// setelah user menjawab "Ya, Batalkan" pada dialog konfirmasi.
+  /// Shell tetap satu-satunya pemilik list tiket.
+  void _removeTicket(int ticketId) {
+    setState(() => _tickets.removeWhere((ticket) => ticket.id == ticketId));
   }
 
   @override
@@ -86,7 +88,7 @@ class _HomeEventsScreenState extends State<HomeEventsScreen> {
           _SeminarListTab(onRegister: _openRegistration),
           // Tab 2 — Galeri & Denah (galeri grid + denah interaktif).
           const _GalleryTab(),
-          // Tab 3 — Tiket Saya (placeholder, ter-wiring ke list tiket shell).
+          // Tab 3 — Tiket Saya (list tiket + swipe batal via callback shell).
           RegisteredTicketsScreen(
             tickets: _tickets,
             onRemoveTicket: _removeTicket,
