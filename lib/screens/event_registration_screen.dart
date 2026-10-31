@@ -7,7 +7,7 @@ import '../models/registration_ticket.dart';
 
 /// Layar Registrasi Tiket — di-push dari shell saat kartu seminar di-tap.
 ///
-/// Form + GlobalKey<FormState> berisi validasi Nama, NIM, Email, dan
+/// Form + GlobalKey{FormState} berisi validasi Nama, NIM, Email, dan
 /// No. WhatsApp. Tanggal Kunjungan dipilih lewat showDatePicker (tanpa
 /// package intl — format tanggal manual Indonesia). Saat submit valid:
 /// indikator loading 2 detik (simulasi proses server), lalu tiket
