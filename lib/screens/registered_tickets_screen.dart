@@ -4,9 +4,9 @@ import '../models/registration_ticket.dart';
 
 /// Layar Tab 3 — Tiket Saya.
 ///
-/// Menerima daftar tiket + callback hapus (berdasarkan id) dari shell —
-/// bukan pemilik state. Swipe kiri pada kartu memunculkan dialog
-/// konfirmasi lewat confirmDismiss (dipanggil SEBELUM item hilang),
+/// StatelessWidget: menerima daftar tiket + callback hapus (berdasarkan
+/// id) dari shell — bukan pemilik state. Swipe kiri pada kartu memunculkan
+/// dialog konfirmasi lewat confirmDismiss (dipanggil SEBELUM item hilang),
 /// lalu shell menghapus tiket lewat onRemoveTicket + SnackBar feedback.
 class RegisteredTicketsScreen extends StatelessWidget {
   const RegisteredTicketsScreen({
@@ -25,7 +25,7 @@ class RegisteredTicketsScreen extends StatelessWidget {
   ///
   /// WAJIB dipanggil dari confirmDismiss (bukan onDismissed) supaya
   /// keputusan user dijawab SEBELUM item dihapus dari layar.
-  /// Return true = batalkan tiket, false = batal menghapus.
+  /// Return true = batalkan tiket, false/null = batal menghapus.
   Future<bool?> _confirmCancel(
     BuildContext context,
     RegistrationTicket ticket,
@@ -113,8 +113,9 @@ class RegisteredTicketsScreen extends StatelessWidget {
                   confirmDismiss: (direction) =>
                       _confirmCancel(context, ticket),
                   onDismissed: (direction) {
-                    // Shell yang menghapus tiket dari list.
-                    widget.onRemoveTicket(ticket.id);
+                    // StatelessWidget → panggil field langsung
+                    // (tanpa awalan "widget." — itu hanya untuk State<T>).
+                    onRemoveTicket(ticket.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Pendaftaran dibatalkan')),
                     );
@@ -127,4 +128,134 @@ class RegisteredTicketsScreen extends StatelessWidget {
   }
 }
 
-/// Kartu tiket ter
+/// Kartu tiket terdaftar: kode tiket, judul event, nama & NIM,
+/// tanggal kunjungan, dan chip kategori.
+class _TicketCard extends StatelessWidget {
+  const _TicketCard({required this.ticket});
+
+  final RegistrationTicket ticket;
+
+  @override
+  Widget build(BuildContext context) {
+    final (chipBackground, chipForeground) = _categoryColors(
+      ticket.eventCategory,
+    );
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ---------- Kode tiket ----------
+            Row(
+              children: [
+                Icon(
+                  Icons.confirmation_number_outlined,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  ticket.ticketCode,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+
+            // ---------- Judul event ----------
+            Text(
+              ticket.eventTitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+
+            // ---------- Nama & NIM ----------
+            _TicketInfoRow(
+              icon: Icons.person_outline,
+              text: '${ticket.name} • NIM ${ticket.nim}',
+            ),
+            const SizedBox(height: 4),
+
+            // ---------- Tanggal kunjungan ----------
+            _TicketInfoRow(
+              icon: Icons.calendar_month_outlined,
+              text: 'Kunjungan: ${ticket.visitDate}',
+            ),
+            const SizedBox(height: 10),
+
+            // ---------- Chip kategori ----------
+            Chip(
+              label: Text(ticket.eventCategory),
+              backgroundColor: chipBackground,
+              labelStyle: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: chipForeground,
+              ),
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              side: BorderSide.none,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Baris info kecil pada kartu tiket (ikon + teks abu, anti overflow).
+class _TicketInfoRow extends StatelessWidget {
+  const _TicketInfoRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: Colors.grey.shade600),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Colors.grey.shade700),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Warna chip kategori — senada dengan EventCard & layar registrasi.
+(Color, Color) _categoryColors(String category) {
+  switch (category) {
+    case 'AI':
+      return (Colors.indigo.shade100, Colors.indigo.shade800);
+    case 'Mobile':
+      return (Colors.green.shade100, Colors.green.shade800);
+    case 'IoT':
+      return (Colors.orange.shade100, Colors.orange.shade900);
+    case 'Keamanan Siber':
+      return (Colors.red.shade100, Colors.red.shade800);
+    default:
+      return (Colors.blueGrey.shade100, Colors.blueGrey.shade800);
+  }
+}
