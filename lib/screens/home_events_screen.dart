@@ -5,6 +5,7 @@ import '../models/event_item.dart';
 import '../models/registration_ticket.dart';
 import '../widgets/event_card.dart';
 import '../widgets/filter_bottom_sheet.dart';
+import '../widgets/venue_map_viewer.dart';
 import 'event_registration_screen.dart';
 import 'registered_tickets_screen.dart';
 
@@ -83,7 +84,7 @@ class _HomeEventsScreenState extends State<HomeEventsScreen> {
         children: [
           // Tab 1 — Daftar Seminar (list + filter kategori).
           _SeminarListTab(onRegister: _openRegistration),
-          // Tab 2 — Galeri & Denah (placeholder).
+          // Tab 2 — Galeri & Denah (galeri grid + denah interaktif).
           const _GalleryTab(),
           // Tab 3 — Tiket Saya (placeholder, ter-wiring ke list tiket shell).
           RegisteredTicketsScreen(
@@ -192,9 +193,12 @@ class _SeminarListTabState extends State<_SeminarListTab> {
   }
 }
 
-/// Tab 2 — Galeri & Denah (placeholder).
-// TODO tahap 4: diganti implementasi asli (GridView.builder galeri
-// + InteractiveViewer denah venue).
+/// Tab 2 — Galeri & Denah.
+///
+/// Satu ListView scrollable berisi: header galeri, GridView foto acara
+/// (shrinkWrap + NeverScrollableScrollPhysics — grid ikut scroll induk,
+/// bukan scroll sendiri, sehingga bebas overflow), header denah, dan
+/// VenueMapViewer interaktif.
 class _GalleryTab extends StatelessWidget {
   const _GalleryTab();
 
@@ -202,8 +206,128 @@ class _GalleryTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Galeri & Denah')),
-      body: const Center(
-        child: Text('Galeri foto dan denah venue akan tampil di sini.'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          // ---------- Bagian 1: Galeri Acara ----------
+          const _SectionHeader(
+            title: 'Galeri Acara',
+            icon: Icons.photo_library_outlined,
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Kolom responsif: lebar tersedia / 180, dikunci 2-4.
+              // 2 kolom di HP, 3-4 di layar lebar.
+              final int crossAxisCount = (constraints.maxWidth / 180)
+                  .floor()
+                  .clamp(2, 4)
+                  .toInt();
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.9,
+                ),
+                itemCount: sampleEvents.length,
+                itemBuilder: (context, index) {
+                  final EventItem event = sampleEvents[index];
+                  return _GalleryPhotoCard(event: event);
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+
+          // ---------- Bagian 2: Denah Venue ----------
+          const _SectionHeader(title: 'Denah Venue', icon: Icons.map_outlined),
+          const SizedBox(height: 12),
+          const VenueMapViewer(),
+
+          // Spasi bawah supaya nyaman discroll.
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+/// Header bagian (ikon + judul) untuk Tab Galeri & Denah.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+}
+
+/// Kartu foto galeri: gambar acara (Expanded, anti overflow) + caption judul.
+class _GalleryPhotoCard extends StatelessWidget {
+  const _GalleryPhotoCard({required this.event});
+
+  final EventItem event;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 1,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Gambar mengisi sisa tinggi kartu (caption tingginya tetap).
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+              child: Image.network(
+                event.imageUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey.shade300,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              event.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
