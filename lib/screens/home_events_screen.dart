@@ -34,7 +34,9 @@ class _HomeEventsScreenState extends State<HomeEventsScreen> {
   }
 
   /// Dipanggil saat kartu seminar di-tap (dari Tab 1).
-  /// Menunggu hasil dari layar registrasi, lalu menambahkan tiket + SnackBar.
+  /// Menunggu hasil dari layar registrasi: jika ada tiket yang kembali,
+  /// tambahkan ke list + SnackBar hijau dengan aksi "Lihat" yang
+  /// langsung melompat ke tab Tiket Saya.
   Future<void> _openRegistration(EventItem event) async {
     final result = await Navigator.push(
       context,
@@ -45,8 +47,25 @@ class _HomeEventsScreenState extends State<HomeEventsScreen> {
 
     if (result is RegistrationTicket && mounted) {
       setState(() => _tickets.add(result));
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Pendaftaran berhasil')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green.shade700,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+          content: Text(
+            'Pendaftaran berhasil! Kode tiket: ${result.ticketCode}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          action: SnackBarAction(
+            label: 'Lihat',
+            textColor: Colors.white,
+            onPressed: () {
+              if (mounted) setState(() => _selectedIndex = 2);
+            },
+          ),
+        ),
+      );
     }
   }
 
